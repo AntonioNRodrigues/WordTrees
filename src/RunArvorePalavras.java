@@ -1,83 +1,69 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Scanner;
 
-/*
- * Classe que fornece uma interface com o utilizador
- * para poder utilizar a classe ArvorePalavras
+/**
+ * Command line interface for the word frequency tree.
+ *
+ * Usage: RunArvorePalavras [input-file] [output-file]
+ * Defaults: input-file=texto, output-file=resultado
  */
 public class RunArvorePalavras {
 
-	/*
-	 * Funcao auxiliar que ler do ficheiro as palavras e cria��o da respectiva
-	 * arvore bin�ria.
-	 * 
-	 * @param ficheiro nome do ficheiro
-	 * 
-	 * @return Uma inst�ncia da classe ArvorePalavras.
-	 */
-	private static ArvorePalavras2 lerFicheiro(String ficheiro)
-			throws IOException {
-
-		Scanner leitor = new Scanner(new FileReader(ficheiro));
+	private static ArvorePalavras2 lerFicheiro(String ficheiro) throws IOException {
 		ArvorePalavras2 arvore = new ArvorePalavras2();
-		String palavra;
-
-		while (leitor.hasNext()) {
-			palavra = leitor.next();
-			palavra = palavra.replaceAll("[^\\p{L}]", "");
-			palavra = palavra.toUpperCase().trim();
-			arvore.inserePalavra(palavra);
+		try (Scanner leitor = new Scanner(new BufferedReader(new FileReader(ficheiro)))) {
+			while (leitor.hasNext()) {
+				String palavra = leitor.next().replaceAll("[^\\p{L}]", "");
+				if (!palavra.isEmpty()) {
+					arvore.inserePalavra(palavra.toUpperCase(Locale.ROOT));
+				}
+			}
 		}
-
-		leitor.close();
-
 		return arvore;
 	}
 
 	public static void main(String[] args) throws IOException {
+		String input = args.length > 0 ? args[0] : "texto";
+		String output = args.length > 1 ? args[1] : "resultado";
 
-		Scanner sc = new Scanner(System.in);
+		try (Scanner sc = new Scanner(System.in);
+				BufferedWriter bWriter = new BufferedWriter(new FileWriter(output))) {
 
-		System.out.println("Introduza o Nome do ficheiro: ");
-		BufferedWriter bWriter = new BufferedWriter(new FileWriter("resultado"));
+			ArvorePalavras2 arvore = lerFicheiro(input);
+			bWriter.write(arvore.toString() + "\n");
 
-		ArvorePalavras2 arvore = lerFicheiro(sc.next());
+			System.out.print("Enter a word: ");
+			String palavra = sc.hasNext() ? sc.next() : "";
+			int f1 = arvore.contaFrequencia(palavra);
+			bWriter.write(Integer.toString(f1) + "\n\n");
 
-		bWriter.write(arvore.toString() + "\n");
-		System.out.println("Introduza uma Palavra: ");
-		String palavra = sc.next();
-		int f1 = arvore.contaFrequencia(palavra);
-		bWriter.write(Integer.toString(f1) + "\n\n");
-		System.out.println("Introduza uma Palavra: ");
-		String palavra2 = sc.next();
-		int f2 = arvore.contaFrequencia(palavra2);
-		bWriter.write(Integer.toString(f2) + "\n\n");
-		if (f1 > 0 && f2 > 0)
-			bWriter.write(Integer.toString(arvore.entrePalavras(palavra,
-					palavra2)) + "\n\n");
+			System.out.print("Enter another word: ");
+			String palavra2 = sc.hasNext() ? sc.next() : "";
+			int f2 = arvore.contaFrequencia(palavra2);
+			bWriter.write(Integer.toString(f2) + "\n\n");
 
-		System.out.println("Introduza um Prefixo: ");
-		palavra = sc.next();
-		for (String s : arvore.prefixo(palavra)) {
-			bWriter.write(s + "\n");
-		
+			if (f1 > 0 && f2 > 0) {
+				bWriter.write(Integer.toString(arvore.entrePalavras(palavra, palavra2)) + "\n\n");
+			}
+
+			System.out.print("Enter a prefix: ");
+			String prefixo = sc.hasNext() ? sc.next() : "";
+			for (String s : arvore.prefixo(prefixo)) {
+				bWriter.write(s + "\n");
+			}
+			bWriter.write("\n");
+
+			arvore.removePrimeira();
+			bWriter.write(arvore.toString() + "\n");
+
+			for (String s : arvore.maxFrequencia()) {
+				bWriter.write(s + "\n");
+			}
 		}
-		bWriter.write("\n");
-		arvore.removePrimeira();
-
-		bWriter.write(arvore.toString() + "\n");
-
-		for (String s : arvore.maxFrequencia()) {
-			bWriter.write(s + "\n");
-		}
-
-		bWriter.close();
-
 	}
-
 }

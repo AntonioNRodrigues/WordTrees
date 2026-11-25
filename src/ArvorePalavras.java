@@ -3,12 +3,9 @@ import java.util.Iterator;
 import java.util.Stack;
 
 /**
- * 
- */
-
-/**
+ * Original experimental word tree kept for reference.
+ *
  * @author antonio
- * 
  */
 public class ArvorePalavras<ConjuntoPalavrasFrequencia> implements
 		Iterable<String> {
@@ -101,8 +98,7 @@ public class ArvorePalavras<ConjuntoPalavrasFrequencia> implements
 	public int entrePalavras(String palavra, String palavra2) {
 		ArrayList<String> lista = new ArrayList<>();
 		Iterator it = new Iterador(raiz);
-		System.out.println("swaeqq "+ it.next());
-		
+
 		while (it.hasNext()) {
 			lista.add((String) it.next());
 		}
