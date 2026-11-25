@@ -1,12 +1,9 @@
 import java.util.Comparator;
 
 /**
- * 
- */
-
-/**
+ * A word together with its occurrence frequency.
+ *
  * @author antonio
- * 
  */
 public class ConjuntoPalavraFrequencia implements Comparable<String> {
 	private String palavra;
@@ -22,7 +19,7 @@ public class ConjuntoPalavraFrequencia implements Comparable<String> {
 	}
 
 	/**
-	 * @return the palavra
+	 * @return the word
 	 */
 
 	public String getPalavra() {
@@ -31,14 +28,14 @@ public class ConjuntoPalavraFrequencia implements Comparable<String> {
 
 	/**
 	 * @param palavra
-	 *            the palavra to set
+	 *            the word to set
 	 */
 	public void setPalavra(String palavra) {
 		this.palavra = palavra;
 	}
 
 	/**
-	 * @return the frequencia
+	 * @return the frequency
 	 */
 	public int getFrequencia() {
 		return frequencia;
@@ -46,7 +43,7 @@ public class ConjuntoPalavraFrequencia implements Comparable<String> {
 
 	/**
 	 * @param frequencia
-	 *            the frequencia to set
+	 *            the frequency to set
 	 */
 	public void setFrequencia(int frequencia) {
 		this.frequencia = frequencia;

@@ -1,10 +1,17 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Stack;
 
 /**
+ * Binary search tree of words with occurrence frequencies.
+ *
+ * Words are stored in upper case so that insertion and lookup are
+ * case-insensitive. Public results are returned in lower case.
+ *
  * @author antonio
- * 
  */
 public class ArvorePalavras2 implements Iterable<String> {
 
@@ -24,239 +31,193 @@ public class ArvorePalavras2 implements Iterable<String> {
 	}
 
 	public void inserePalavra(String palavra) {
+		if (palavra == null || palavra.isEmpty()) {
+			return;
+		}
 
+		String upper = palavra.toUpperCase(Locale.ROOT);
 		if (raiz.data == null) {
-			raiz = new Node(palavra, 1);
+			raiz = new Node(upper, 1);
+			return;
+		}
 
-		} else {
-			Node anterior = null;
-			Node nodeRaiz = raiz;
-			int compare = 0;
-			boolean goEsquerda = false;
-			boolean goDireita = false;
-
-			do {
-				compare = nodeRaiz.data.compareTo(palavra);
-				if (compare == 0) {
-					nodeRaiz.freq++;
+		Node node = raiz;
+		while (true) {
+			int compare = node.data.compareTo(upper);
+			if (compare == 0) {
+				node.freq++;
+				return;
+			}
+			if (compare > 0) {
+				if (node.esq == null) {
+					node.esq = new Node(upper, 1);
 					return;
 				}
-				if (compare > 0) {
-					anterior = nodeRaiz;
-					nodeRaiz = nodeRaiz.esq;
-					goEsquerda = true;
-					goDireita = false;
+				node = node.esq;
+			} else {
+				if (node.dta == null) {
+					node.dta = new Node(upper, 1);
+					return;
 				}
-				if (compare < 0) {
-					anterior = nodeRaiz;
-					nodeRaiz = nodeRaiz.dta;
-					goEsquerda = false;
-					goDireita = true;
-				}
-
-			} while (nodeRaiz != null);
-			if (goDireita) {
-				anterior.dta = new Node(palavra, 1);
-			} else if (goEsquerda) {
-				anterior.esq = new Node(palavra, 1);
+				node = node.dta;
 			}
 		}
 	}
 
+	@Override
 	public Iterator<String> iterator() {
-		return new Iterador(raiz);
-
+		List<String> words = new ArrayList<String>();
+		for (Node node : inOrderNodes()) {
+			words.add(node.data.toLowerCase(Locale.ROOT));
+		}
+		return words.iterator();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
-		Iterator it = new Iterador(raiz);
-		Iterador it2= new Iterador(raiz);
 		StringBuilder sb = new StringBuilder();
-		while (it.hasNext()) {
-			sb.append(it.next()).append(" [").append(it2.next2()).append("]");
-			sb.append("\n");
+		for (Node node : inOrderNodes()) {
+			sb.append(node.data.toLowerCase(Locale.ROOT)).append(" [")
+					.append(node.freq).append("]\n");
 		}
-		return sb.toString().toLowerCase();
+		return sb.toString();
 	}
 
-	private class Node<String extends Comparable<String>, Integer> {
+	public int contaFrequencia(String palavra) {
+		if (palavra == null || palavra.isEmpty() || raiz.data == null) {
+			return 0;
+		}
+
+		String upper = palavra.toUpperCase(Locale.ROOT);
+		Node node = raiz;
+		while (node != null) {
+			int compare = node.data.compareTo(upper);
+			if (compare == 0) {
+				return node.freq;
+			}
+			node = compare > 0 ? node.esq : node.dta;
+		}
+		return 0;
+	}
+
+	/**
+	 * Counts distinct words strictly between the two given words in
+	 * lexicographic order. Bounds are case-insensitive.
+	 */
+	public int entrePalavras(String palavra, String palavra2) {
+		if (palavra == null || palavra2 == null || palavra.isEmpty()
+				|| palavra2.isEmpty()) {
+			return 0;
+		}
+
+		String first = palavra.toUpperCase(Locale.ROOT);
+		String second = palavra2.toUpperCase(Locale.ROOT);
+		String min = first.compareTo(second) <= 0 ? first : second;
+		String max = first.compareTo(second) <= 0 ? second : first;
+
+		int count = 0;
+		for (Node node : inOrderNodes()) {
+			if (node.data.compareTo(min) > 0 && node.data.compareTo(max) < 0) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	public ArrayList<String> prefixo(String palavra) {
+		ArrayList<String> result = new ArrayList<String>();
+		if (palavra == null) {
+			return result;
+		}
+
+		String prefix = palavra.toLowerCase(Locale.ROOT);
+		for (Node node : inOrderNodes()) {
+			String word = node.data.toLowerCase(Locale.ROOT);
+			if (word.startsWith(prefix)) {
+				result.add(word);
+			}
+		}
+		return result;
+	}
+
+	/** Removes the alphabetically first word from the tree. */
+	public void removePrimeira() {
+		if (raiz.data == null) {
+			return;
+		}
+		if (raiz.esq == null) {
+			raiz = raiz.dta == null ? new Node() : raiz.dta;
+			return;
+		}
+
+		Node parent = raiz;
+		Node node = raiz.esq;
+		while (node.esq != null) {
+			parent = node;
+			node = node.esq;
+		}
+		parent.esq = node.dta;
+	}
+
+	/** Returns every word tied for the highest frequency. */
+	public ArrayList<String> maxFrequencia() {
+		ArrayList<String> result = new ArrayList<String>();
+		List<Node> nodes = inOrderNodes();
+		if (nodes.isEmpty()) {
+			return result;
+		}
+
+		int max = 0;
+		for (Node node : nodes) {
+			max = Math.max(max, node.freq);
+		}
+		for (Node node : nodes) {
+			if (node.freq == max) {
+				result.add(node.data.toLowerCase(Locale.ROOT));
+			}
+		}
+		return result;
+	}
+
+	private List<Node> inOrderNodes() {
+		if (raiz == null || raiz.data == null) {
+			return Collections.emptyList();
+		}
+
+		List<Node> nodes = new ArrayList<Node>();
+		Stack<Node> stack = new Stack<Node>();
+		Node current = raiz;
+		while (current != null || !stack.isEmpty()) {
+			while (current != null) {
+				stack.push(current);
+				current = current.esq;
+			}
+			current = stack.pop();
+			nodes.add(current);
+			current = current.dta;
+		}
+		return nodes;
+	}
+
+	private static class Node {
 		private String data;
 		private int freq;
 		private Node esq;
 		private Node dta;
 
 		private Node() {
-			this.freq = 0;
-			this.data = null;
-			this.dta = null;
-			this.esq = null;
-		}
-
-		private Node(String data, int freq, Node esq, Node dta) {
-			this.freq = freq;
-			this.data = data;
-			this.dta = dta;
-			this.esq = esq;
+			this(null, 0, null, null);
 		}
 
 		private Node(String data, int freq) {
-			this.freq = freq;
+			this(data, freq, null, null);
+		}
+
+		private Node(String data, int freq, Node esq, Node dta) {
 			this.data = data;
-			this.dta = null;
-			this.esq = null;
+			this.freq = freq;
+			this.esq = esq;
+			this.dta = dta;
 		}
-
-		public int compareTo(String o) {
-			return this.data.compareTo(o);
-		}
-		
-	}
-
-	private class Iterador implements Iterator {
-		private Stack<Node> stack;
-		private Node current;
-
-		public Iterador(Node copyRoot) {
-			this.stack = new Stack<>();
-			this.current = copyRoot;
-			pushEsq(current);
-		}
-
-		private void pushEsq(Node current) {
-			while (current != null) {
-				stack.push(current);
-				current = current.esq;
-			}
-		}
-
-		@Override
-		public boolean hasNext() {
-			return !stack.isEmpty();
-		}
-
-		@Override
-		public String next() {
-			Node resultado = null;
-			if (hasNext()) {
-				resultado = stack.pop();
-				pushEsq(resultado.dta);
-			}
-			return resultado.data.toString();
-		}
-		public Integer next2() {
-			Node resultado = null;
-			if (hasNext()) {
-				resultado = stack.pop();
-				pushEsq(resultado.dta);
-			}
-			return resultado.freq;
-		}
-
-		@Override
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-		
-	}
-
-	public int contaFrequencia(String palavra) {
-		boolean encontrouPalavra = false;
-		int compare = 0;
-		Node node = raiz;
-
-		while (!encontrouPalavra) {
-			String p = (String) node.data;
-			compare = p.compareTo(palavra.toUpperCase());
-			if (compare == 0) {
-				encontrouPalavra = true;
-				return node.freq;
-			}
-			if (compare > 0) {
-				node = node.esq;
-			}
-			if (compare < 0) {
-				node = node.dta;
-			}
-			if (node == null) {
-				return 0;
-			}
-		}
-		return 0;
-	}
-
-	public int entrePalavras(String palavra, String palavra2) {
-		
-		
-		return 0;
-	}
-
-	public ArrayList<String> prefixo(String palavra) {
-		ArrayList<String> lista = getLista();
-		ArrayList<String> listaPrefixo = new ArrayList<String>();
-		
-		for (String s : lista){
-			if(s.toLowerCase().startsWith(palavra)){
-				listaPrefixo.add(s.toLowerCase());
-			}
-		}
-		
-		return listaPrefixo;
-	}
-
-	public void removePrimeira() {
-		Node node = raiz;
-		Node pai = node;
-		while (node.esq != null) {
-			pai = node;
-			node = node.esq;
-
-		}
-		if (node.dta != null) {
-			pai.esq = node.dta;
-			node = null;
-		} else {
-			pai.esq = null;
-		}
-
-	}
-
-	public ArrayList<String> maxFrequencia() {
-		ArrayList<Integer> lista = getListaInt();
-		ArrayList<String> lista3 = getLista();
-		ArrayList<String> lista2 = new ArrayList<String>();
-		int max = 0;
-		int indice = 0;
-		for (int i : lista){
-			if (i > max){
-				max = i;
-				indice = lista.indexOf(i);
-			}
-		}
-		lista2.add(lista3.get(indice));
-		
-		return lista2;
-	}
-
-	private ArrayList<String> getLista() {
-		ArrayList<String> lista = new ArrayList<String>();
-		Iterator it = new Iterador(raiz);
-		while (it.hasNext()) {
-			lista.add((String) it.next());
-		}
-		return lista;
-	}
-	private ArrayList<Integer> getListaInt() {
-		ArrayList<Integer> lista = new ArrayList<Integer>();
-		Iterador it = new Iterador(raiz);
-		while (it.hasNext()) {
-			lista.add((Integer) it.next2());
-		}
-		return lista;
 	}
 }
